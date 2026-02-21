@@ -19,6 +19,7 @@ class Settings(BaseModel):
     xray_config_path: str = os.getenv("XRAY_CONFIG_PATH", "/usr/local/etc/xray/config.json")
     xray_restart_cmd: str = os.getenv("XRAY_RESTART_CMD", "")
     xray_bin: str = os.getenv("XRAY_BIN", "/usr/local/bin/xray")
+    xray_online_activity_window_sec: int = int(os.getenv("XRAY_ONLINE_ACTIVITY_WINDOW_SEC", "120"))
 
     agent_token: str = os.getenv("XRAY_AGENT_TOKEN", "b54faaef41dfea320e52e25823a8999be3719003a0842910d160a3cd490f6954")
 

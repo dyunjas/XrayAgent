@@ -179,7 +179,7 @@ def web_dashboard_api(
 
     emails = [email_for_key(k) for k in keys]
     user_traffic = traffic_service.get_users_traffic(emails)
-    user_online = traffic_service.get_users_online(emails)
+    user_online = traffic_service.get_users_online(emails, user_traffic)
     inbound = traffic_service.get_inbound_traffic()
 
     users = []
@@ -456,7 +456,7 @@ def web_graphs_live(request: Request, db: Session = Depends(get_db)):
     inbound = traffic_service.get_inbound_traffic()
     users_map = traffic_service.get_users_traffic(emails)
     users_total = sum(int(v["total"]) for v in users_map.values())
-    users_online_map = traffic_service.get_users_online(emails)
+    users_online_map = traffic_service.get_users_online(emails, users_map)
     online_now = sum(1 for v in users_online_map.values() if bool(v.get("online")))
 
     return {

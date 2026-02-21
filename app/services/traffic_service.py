@@ -1,4 +1,5 @@
 import json
+import time
 from fastapi import HTTPException
 
 from app.config import settings
@@ -6,6 +7,9 @@ from app.utils.subprocess_run import run_cmd
 
 
 class TrafficService:
+    def __init__(self):
+        self._online_cache: dict[str, dict[str, int | float]] = {}
+
     @staticmethod
     def _is_stat_missing_error(exc: Exception) -> bool:
         detail = ""
@@ -117,8 +121,10 @@ class TrafficService:
                 }
         return out
 
-    def get_users_online(self, emails: list[str]) -> dict[str, dict]:
+    def get_users_online(self, emails: list[str], traffic_map: dict[str, dict] | None = None) -> dict[str, dict]:
         out: dict[str, dict] = {}
+        now = time.time()
+        activity_window = max(15, int(settings.xray_online_activity_window_sec))
         for email in emails:
             # Newer Xray builds may expose per-user online counters when enabled in policy stats.
             # If not available, we return supported=False and online=False.
@@ -136,10 +142,30 @@ class TrafficService:
                 except Exception:
                     continue
 
+            inferred = False
+            if not supported:
+                traffic = (traffic_map or {}).get(email)
+                if traffic is None:
+                    traffic = self.get_users_traffic([email]).get(email, {"total": 0})
+                total = int((traffic or {}).get("total", 0))
+                state = self._online_cache.get(email, {"last_total": total, "last_seen": now, "last_active": 0.0})
+                last_total = int(state.get("last_total", total))
+                last_active = float(state.get("last_active", 0.0))
+                if total > last_total:
+                    last_active = now
+                is_online = (now - last_active) <= activity_window if last_active > 0 else False
+                self._online_cache[email] = {
+                    "last_total": total,
+                    "last_seen": now,
+                    "last_active": last_active,
+                }
+                inferred = True
+
             out[email] = {
-                "supported": supported,
-                "online": bool(value > 0) if supported else False,
+                "supported": supported or inferred,
+                "online": bool(value > 0) if supported else bool(is_online if inferred else False),
                 "value": int(value),
+                "inferred": inferred,
             }
         return out
 
