@@ -16,6 +16,27 @@ class TrafficService:
         low = detail.lower()
         return "not found" in low or "notfound" in low or "unknown stat" in low
 
+    @staticmethod
+    def _is_service_unavailable_error(exc: Exception) -> bool:
+        detail = str(getattr(exc, "detail", exc)).lower()
+        return "does not expose service" in detail or "unimplemented" in detail
+
+    def _get_stat_via_xray_cli(self, name: str, *, reset: bool = False) -> dict:
+        cmd = [
+            settings.xray_bin,
+            "api",
+            "stats",
+            f"--server={settings.xray_addr}",
+            "-name",
+            name,
+        ]
+        if reset:
+            cmd.append("-reset")
+        raw = run_cmd(cmd).decode(errors="replace").strip()
+        data = json.loads(raw) if raw else {}
+        value = int((data or {}).get("value", 0))
+        return {"ok": True, "name": name, "value": value, "missing": False}
+
     def _get_stat(self, name: str, *, reset: bool = False) -> dict:
         payload = json.dumps({"name": name, "reset": reset}, separators=(",", ":"))
         last_exc: Exception | None = None
@@ -41,9 +62,11 @@ class TrafficService:
                 # This still means StatsService is reachable, so expose zero value.
                 if self._is_stat_missing_error(exc):
                     return {"ok": True, "name": name, "value": 0, "missing": True}
-                detail = str(getattr(exc, "detail", exc)).lower()
-                if "does not expose service" in detail or "unimplemented" in detail:
-                    continue
+                if self._is_service_unavailable_error(exc):
+                    try:
+                        return self._get_stat_via_xray_cli(name, reset=reset)
+                    except Exception:
+                        continue
                 raise
         else:
             if last_exc is not None:
