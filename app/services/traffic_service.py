@@ -9,6 +9,8 @@ from app.utils.subprocess_run import run_cmd
 class TrafficService:
     def __init__(self):
         self._online_cache: dict[str, dict[str, int | float]] = {}
+        self._statsquery_cache: dict[str, int] = {}
+        self._statsquery_cache_ts: float = 0.0
 
     @staticmethod
     def _is_stat_missing_error(exc: Exception) -> bool:
@@ -25,21 +27,51 @@ class TrafficService:
         detail = str(getattr(exc, "detail", exc)).lower()
         return "does not expose service" in detail or "unimplemented" in detail
 
-    def _get_stat_via_xray_cli(self, name: str, *, reset: bool = False) -> dict:
+    def _statsquery_map(self, *, force: bool = False) -> dict[str, int]:
+        now = time.time()
+        # Keep very short cache to avoid hammering xray api for every single counter.
+        if not force and (now - self._statsquery_cache_ts) < 1.0 and self._statsquery_cache:
+            return self._statsquery_cache
+
         cmd = [
             settings.xray_bin,
             "api",
-            "stats",
+            "statsquery",
             f"--server={settings.xray_addr}",
-            "-name",
-            name,
         ]
-        if reset:
-            cmd.append("-reset")
         raw = run_cmd(cmd).decode(errors="replace").strip()
         data = json.loads(raw) if raw else {}
-        value = int((data or {}).get("value", 0))
-        return {"ok": True, "name": name, "value": value, "missing": False}
+        result: dict[str, int] = {}
+        for item in (data.get("stat") or []):
+            if not isinstance(item, dict):
+                continue
+            stat_name = str(item.get("name") or "").strip()
+            if not stat_name:
+                continue
+            result[stat_name] = int(item.get("value", 0) or 0)
+        self._statsquery_cache = result
+        self._statsquery_cache_ts = now
+        return result
+
+    def _get_stat_via_xray_cli(self, name: str, *, reset: bool = False) -> dict:
+        if reset:
+            cmd = [
+                settings.xray_bin,
+                "api",
+                "stats",
+                f"--server={settings.xray_addr}",
+                "-name",
+                name,
+                "-reset",
+            ]
+            raw = run_cmd(cmd).decode(errors="replace").strip()
+            data = json.loads(raw) if raw else {}
+            value = int((data or {}).get("value", 0))
+            return {"ok": True, "name": name, "value": value, "missing": False}
+
+        values = self._statsquery_map()
+        value = int(values.get(name, 0))
+        return {"ok": True, "name": name, "value": value, "missing": name not in values}
 
     def _get_stat(self, name: str, *, reset: bool = False) -> dict:
         payload = json.dumps({"name": name, "reset": reset}, separators=(",", ":"))
