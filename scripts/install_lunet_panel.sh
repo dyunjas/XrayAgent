@@ -18,7 +18,13 @@ fi
 
 echo "[3/5] Preparing Lunet Panel runtime..."
 mkdir -p /opt/lunet-panel
-cp -r . /opt/lunet-panel
+SRC_DIR="$(realpath .)"
+DST_DIR="/opt/lunet-panel"
+if [[ "${SRC_DIR}" != "${DST_DIR}" ]]; then
+  cp -r . "${DST_DIR}"
+else
+  echo "Source is already ${DST_DIR}, skipping copy"
+fi
 cd /opt/lunet-panel
 python3 -m venv .venv
 source .venv/bin/activate
