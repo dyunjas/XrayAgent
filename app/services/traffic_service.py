@@ -180,9 +180,14 @@ class TrafficService:
                 if traffic is None:
                     traffic = self.get_users_traffic([email]).get(email, {"total": 0})
                 total = int((traffic or {}).get("total", 0))
-                state = self._online_cache.get(email, {"last_total": total, "last_seen": now, "last_active": 0.0})
+                state = self._online_cache.get(email, {"last_total": 0, "last_seen": now, "last_active": 0.0})
                 last_total = int(state.get("last_total", total))
                 last_active = float(state.get("last_active", 0.0))
+
+                # First observation after process restart: if user already has traffic counters,
+                # consider user recently active for one activity window.
+                if email not in self._online_cache and total > 0:
+                    last_active = now
                 if total > last_total:
                     last_active = now
                 is_online = (now - last_active) <= activity_window if last_active > 0 else False
