@@ -1,27 +1,45 @@
 import json
+from fastapi import HTTPException
 
 from app.config import settings
 from app.utils.subprocess_run import run_cmd
 
 
 class TrafficService:
+    @staticmethod
+    def _is_stat_missing_error(exc: Exception) -> bool:
+        detail = ""
+        if isinstance(exc, HTTPException):
+            detail = str(exc.detail or "")
+        else:
+            detail = str(exc or "")
+        low = detail.lower()
+        return "not found" in low or "notfound" in low or "unknown stat" in low
+
     def _get_stat(self, name: str, *, reset: bool = False) -> dict:
         payload = json.dumps({"name": name, "reset": reset}, separators=(",", ":"))
-        raw = run_cmd([
-            settings.grpcurl_bin,
-            "-plaintext",
-            "-protoset",
-            settings.protoset,
-            "-d",
-            payload,
-            settings.xray_addr,
-            "xray.app.stats.command.StatsService/GetStats",
-        ]).decode()
+        try:
+            raw = run_cmd([
+                settings.grpcurl_bin,
+                "-plaintext",
+                "-protoset",
+                settings.protoset,
+                "-d",
+                payload,
+                settings.xray_addr,
+                "xray.app.stats.command.StatsService/GetStats",
+            ]).decode()
+        except Exception as exc:
+            # Xray may return "not found" for counters that were not created yet.
+            # This still means StatsService is reachable, so expose zero value.
+            if self._is_stat_missing_error(exc):
+                return {"ok": True, "name": name, "value": 0, "missing": True}
+            raise
         data = json.loads(raw) if raw else {}
 
         stat = data.get("stat") or {}
         value = int(stat.get("value", 0))
-        return {"ok": True, "name": name, "value": value}
+        return {"ok": True, "name": name, "value": value, "missing": False}
 
     def get_inbound_traffic(self) -> dict:
         try:
