@@ -168,6 +168,8 @@ class TrafficService:
             ):
                 try:
                     stat = self._get_stat(stat_name)
+                    if bool(stat.get("missing")):
+                        continue
                     value = int(stat["value"])
                     supported = True
                     break
