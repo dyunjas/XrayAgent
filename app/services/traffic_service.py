@@ -18,23 +18,37 @@ class TrafficService:
 
     def _get_stat(self, name: str, *, reset: bool = False) -> dict:
         payload = json.dumps({"name": name, "reset": reset}, separators=(",", ":"))
-        try:
-            raw = run_cmd([
-                settings.grpcurl_bin,
-                "-plaintext",
-                "-protoset",
-                settings.protoset,
-                "-d",
-                payload,
-                settings.xray_addr,
-                "xray.app.stats.command.StatsService/GetStats",
-            ]).decode()
-        except Exception as exc:
-            # Xray may return "not found" for counters that were not created yet.
-            # This still means StatsService is reachable, so expose zero value.
-            if self._is_stat_missing_error(exc):
-                return {"ok": True, "name": name, "value": 0, "missing": True}
-            raise
+        last_exc: Exception | None = None
+        for method in (
+            "xray.app.stats.command.StatsService/GetStats",
+            "v2ray.core.app.stats.command.StatsService/GetStats",
+        ):
+            try:
+                raw = run_cmd([
+                    settings.grpcurl_bin,
+                    "-plaintext",
+                    "-protoset",
+                    settings.protoset,
+                    "-d",
+                    payload,
+                    settings.xray_addr,
+                    method,
+                ]).decode()
+                break
+            except Exception as exc:
+                last_exc = exc
+                # Xray may return "not found" for counters that were not created yet.
+                # This still means StatsService is reachable, so expose zero value.
+                if self._is_stat_missing_error(exc):
+                    return {"ok": True, "name": name, "value": 0, "missing": True}
+                detail = str(getattr(exc, "detail", exc)).lower()
+                if "does not expose service" in detail or "unimplemented" in detail:
+                    continue
+                raise
+        else:
+            if last_exc is not None:
+                raise last_exc
+            raise RuntimeError("StatsService call failed without explicit exception")
         data = json.loads(raw) if raw else {}
 
         stat = data.get("stat") or {}
