@@ -1,0 +1,30 @@
+.controls {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 300px) auto;
+  align-items: end;
+}
+
+label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #cde0ff;
+  background: #091633;
+  border: 1px solid #274783;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .controls {
+    grid-template-columns: 1fr;
+  }
+}

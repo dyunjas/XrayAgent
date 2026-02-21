@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lunet Panel | Panel Settings</title>
+  <script>
+    (() => {
+      try {
+        const t = localStorage.getItem("lunet_theme") || "dark";
+        const l = localStorage.getItem("lunet_lang") || "en";
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+        document.documentElement.setAttribute("data-lang", l === "ru" ? "ru" : "en");
+        document.documentElement.lang = l === "ru" ? "ru" : "en";
+      } catch (_) {
+        document.documentElement.setAttribute("data-theme", "dark");
+        document.documentElement.setAttribute("data-lang", "en");
+        document.documentElement.lang = "en";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/web/static/css/panel.css" />
+  <link rel="stylesheet" href="/web/static/css/panel_settings.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="side-panel">
+      <div class="brand">
+        <div class="brand-logo">LP</div>
+        <div>
+          <h2 class="brand-title">Lunet Panel</h2>
+          <p class="brand-sub">Xray Management</p>
+        </div>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title" data-i18n="sidebar.overview">Overview</div>
+        <a class="side-link" href="/web" data-i18n="sidebar.home">Home</a>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title" data-i18n="sidebar.management">Management</div>
+        <a class="side-link" href="/web/xray" data-i18n="sidebar.xray_settings">Xray Settings</a>
+        <a class="side-link" href="/web/graphs" data-i18n="sidebar.graphs">Graphs</a>
+      </div>
+      <div class="side-actions">
+        <button class="btn" data-theme-toggle>Light theme</button>
+        <button class="btn" data-lang-toggle>RU</button>
+        <a class="side-link active" href="/web/settings" data-i18n="sidebar.panel_settings">Panel Settings</a>
+        <button class="btn logout-btn" data-i18n="sidebar.logout">Logout</button>
+      </div>
+    </aside>
+
+    <section class="content">
+      <section id="securityWarning" class="panel warning" hidden>
+        <div class="warning-title" data-i18n="panel.security_title">Security Warning</div>
+        <div class="warning-text" data-i18n="panel.security_text">Connection is not encrypted. Use HTTPS before entering sensitive data.</div>
+      </section>
+
+      <section class="panel topbar">
+        <div>
+          <div class="breadcrumbs" data-i18n="panel.breadcrumbs">Home | Panel Settings</div>
+          <h1 data-i18n="panel.title">Panel Settings</h1>
+          <p class="sub" data-i18n="panel.subtitle">Appearance, refresh, client table and graph behavior</p>
+        </div>
+      </section>
+
+      <section class="grid gauges">
+        <article class="panel gauge-card">
+          <div class="gauge" id="cpuGauge"><span id="cpuGaugeText">0%</span></div>
+          <div class="gauge-label" data-i18n="panel.cpu">CPU</div>
+        </article>
+        <article class="panel gauge-card">
+          <div class="gauge" id="memGauge"><span id="memGaugeText">0%</span></div>
+          <div class="gauge-label" data-i18n="panel.memory">Memory</div>
+        </article>
+        <article class="panel gauge-card">
+          <div class="gauge" id="onlineGauge"><span id="onlineGaugeText">0%</span></div>
+          <div class="gauge-label" data-i18n="panel.online_ratio">Online Ratio</div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h3 data-i18n="panel.appearance">Appearance</h3>
+          <div class="row">
+            <span data-i18n="panel.theme_mode">Theme mode</span>
+            <button class="btn" data-theme-toggle data-i18n="panel.switch_theme">Switch Theme</button>
+          </div>
+          <div class="row switch-row">
+            <label for="compactMode" data-i18n="panel.compact_mode">Compact mode</label>
+            <input id="compactMode" type="checkbox" />
+          </div>
+          <div class="row switch-row">
+            <label for="showToasts" data-i18n="panel.show_notifications">Show notifications</label>
+            <input id="showToasts" type="checkbox" />
+          </div>
+        </article>
+
+        <article class="panel">
+          <h3 data-i18n="panel.dashboard">Dashboard</h3>
+          <div class="row">
+            <label for="dashboardRefreshSec" data-i18n="panel.refresh_period">Refresh period (sec)</label>
+            <input id="dashboardRefreshSec" type="number" min="5" max="120" />
+          </div>
+          <div class="row switch-row">
+            <label for="autoCopyUri" data-i18n="panel.auto_copy_uri">Auto-copy URI after create</label>
+            <input id="autoCopyUri" type="checkbox" />
+          </div>
+          <div class="row">
+            <label for="clientsPageSize" data-i18n="panel.clients_rows_limit">Clients rows limit</label>
+            <input id="clientsPageSize" type="number" min="10" max="1000" />
+          </div>
+          <div class="row">
+            <label for="clientsDefaultSort" data-i18n="panel.default_sort">Default sort</label>
+            <select id="clientsDefaultSort">
+              <option value="online_desc" data-i18n="dashboard.sort_online_first">Online first</option>
+              <option value="traffic_desc" data-i18n="dashboard.sort_traffic_desc">Traffic high to low</option>
+              <option value="traffic_asc" data-i18n="dashboard.sort_traffic_asc">Traffic low to high</option>
+              <option value="id_asc" data-i18n="dashboard.sort_id_asc">User ID ascending</option>
+              <option value="id_desc" data-i18n="dashboard.sort_id_desc">User ID descending</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="clientsDefaultFilter" data-i18n="panel.default_filter">Default filter</label>
+            <select id="clientsDefaultFilter">
+              <option value="all" data-i18n="dashboard.filter_all">All clients</option>
+              <option value="online" data-i18n="dashboard.filter_online">Online only</option>
+              <option value="offline" data-i18n="dashboard.filter_offline">Offline only</option>
+            </select>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h3 data-i18n="panel.graphs">Graphs</h3>
+          <div class="row">
+            <label for="graphsRefreshSec" data-i18n="panel.polling_interval">Polling interval (sec)</label>
+            <input id="graphsRefreshSec" type="number" min="2" max="30" />
+          </div>
+          <div class="row">
+            <label for="graphsLineWidth" data-i18n="panel.line_width">Line width (2-6)</label>
+            <input id="graphsLineWidth" type="number" min="2" max="6" />
+          </div>
+          <div class="row">
+            <label for="graphsPoints" data-i18n="panel.history_points">History points (30-180)</label>
+            <input id="graphsPoints" type="number" min="30" max="180" />
+          </div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <button id="saveAllBtn" class="btn primary" data-i18n="panel.save_all">Save all settings</button>
+        <div id="saveState" class="status"></div>
+      </section>
+
+      <section class="panel">
+        <h3 data-i18n="panel.service_status">Service Status</h3>
+        <div id="statusRows" class="status-rows"></div>
+      </section>
+    </section>
+  </main>
+  <script src="/web/static/js/theme.js"></script>
+  <script src="/web/static/js/panel_settings.js"></script>
+</body>
+</html>

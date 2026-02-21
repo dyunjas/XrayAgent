@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lunet Panel | Resets</title>
+  <link rel="stylesheet" href="/web/static/css/panel.css" />
+  <link rel="stylesheet" href="/web/static/css/resets.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="side-panel">
+      <div class="brand">
+        <div class="brand-logo">LP</div>
+        <div>
+          <h2 class="brand-title">Lunet Panel</h2>
+          <p class="brand-sub">Xray Management</p>
+        </div>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Overview</div>
+        <a class="side-link" href="/web">Home</a>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Management</div>
+        <a class="side-link" href="/web/xray">Xray Settings</a>
+        <a class="side-link" href="/web/graphs">Graphs</a>
+      </div>
+    </aside>
+
+    <section class="content">
+      <section class="panel">
+        <header class="topbar">
+          <div>
+            <div class="breadcrumbs">Home | Resets</div>
+            <h1>Traffic Resets</h1>
+            <p class="sub">Reset inbound and user counters in Xray stats</p>
+          </div>
+          <button id="logout" class="btn">Logout</button>
+        </header>
+      </section>
+
+      <section class="panel controls">
+        <label>
+          Scope
+          <select id="scope">
+            <option value="all">All</option>
+            <option value="inbound">Inbound only</option>
+            <option value="users">Users only</option>
+          </select>
+        </label>
+        <button id="resetBtn" class="btn primary">Run Reset</button>
+        <div id="state" class="status"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Last reset result</h3>
+        <pre id="result"></pre>
+      </section>
+    </section>
+  </main>
+  <script src="/web/static/js/theme.js"></script>
+  <script src="/web/static/js/resets.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lunet Panel Login</title>
+  <script>
+    (() => {
+      try {
+        const t = localStorage.getItem("lunet_theme") || "dark";
+        const l = localStorage.getItem("lunet_lang") || "en";
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+        document.documentElement.setAttribute("data-lang", l === "ru" ? "ru" : "en");
+        document.documentElement.lang = l === "ru" ? "ru" : "en";
+      } catch (_) {
+        document.documentElement.setAttribute("data-theme", "dark");
+        document.documentElement.setAttribute("data-lang", "en");
+        document.documentElement.lang = "en";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/web/static/css/login.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="panel">
+      <div class="brand-row">
+        <div class="logo">LP</div>
+        <div>
+          <h1 data-i18n="login.title">Welcome to Lunet Panel</h1>
+          <p data-i18n="login.subtitle">Sign in to manage Xray</p>
+        </div>
+      </div>
+
+      <label for="nick" data-i18n="login.username">Username</label>
+      <input id="nick" autocomplete="username" placeholder="admin" />
+
+      <label for="password" data-i18n="login.password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="********" />
+
+      <button id="submit" data-i18n="login.submit">Login</button>
+
+      <div class="login-tools">
+        <button class="btn-lite" data-theme-toggle>Switch Theme</button>
+        <button class="btn-lite" data-lang-toggle>RU</button>
+      </div>
+      <div id="err" role="alert"></div>
+    </section>
+  </main>
+  <script src="/web/static/js/theme.js"></script>
+  <script src="/web/static/js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lunet Panel</title>
+  <script>
+    (() => {
+      try {
+        const t = localStorage.getItem("lunet_theme") || "dark";
+        const l = localStorage.getItem("lunet_lang") || "en";
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+        document.documentElement.setAttribute("data-lang", l === "ru" ? "ru" : "en");
+        document.documentElement.lang = l === "ru" ? "ru" : "en";
+      } catch (_) {
+        document.documentElement.setAttribute("data-theme", "dark");
+        document.documentElement.setAttribute("data-lang", "en");
+        document.documentElement.lang = "en";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/web/static/css/panel.css" />
+  <link rel="stylesheet" href="/web/static/css/dashboard.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="side-panel">
+      <div class="brand">
+        <div class="brand-logo">LP</div>
+        <div>
+          <h2 class="brand-title">Lunet Panel</h2>
+          <p class="brand-sub">Xray Management</p>
+        </div>
+      </div>
+
+      <div class="side-group">
+        <div class="side-group-title" data-i18n="sidebar.overview">Overview</div>
+        <a class="side-link active" href="/web" data-i18n="sidebar.home">Home</a>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title" data-i18n="sidebar.management">Management</div>
+        <a class="side-link" href="/web/xray" data-i18n="sidebar.xray_settings">Xray Settings</a>
+        <a class="side-link" href="/web/graphs" data-i18n="sidebar.graphs">Graphs</a>
+      </div>
+      <div class="side-meta">
+        <div data-i18n="sidebar.session">Session</div>
+        <div id="nickLabel">User: -</div>
+        <div class="side-status">
+          <span id="sideDbBadge" class="badge">DB: -</span>
+          <span id="sideStatsBadge" class="badge">Stats: -</span>
+        </div>
+      </div>
+      <div class="side-actions">
+        <button class="btn" data-theme-toggle>Light theme</button>
+        <button class="btn" data-lang-toggle>RU</button>
+        <a class="side-link" href="/web/settings" data-i18n="sidebar.panel_settings">Panel Settings</a>
+        <button id="sideLogout" class="btn" data-i18n="sidebar.logout">Logout</button>
+      </div>
+    </aside>
+
+    <section class="content">
+      <header class="panel topbar">
+        <div>
+          <div class="breadcrumbs" data-i18n="dashboard.breadcrumbs">Home | Lunet Panel Dashboard</div>
+          <h1 data-i18n="dashboard.title">Lunet Usage</h1>
+          <p class="sub" data-i18n="dashboard.subtitle">Connected users, traffic and quick controls</p>
+        </div>
+        <div class="top-actions">
+          <button id="resyncBtn" class="btn" data-i18n="dashboard.resync">Resync</button>
+          <button id="resetUsersBtn" class="btn" data-i18n="dashboard.reset_users">Reset Users</button>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="panel metric">
+          <div class="metric-head"><span class="ico" data-ico="users"></span><div class="k" data-i18n="dashboard.online_now">Online now</div></div>
+          <div id="onlineNow" class="v">-</div>
+        </article>
+        <article class="panel metric">
+          <div class="metric-head"><span class="ico" data-ico="shield"></span><div class="k" data-i18n="dashboard.active_keys">Active keys</div></div>
+          <div id="active" class="v">-</div>
+        </article>
+        <article class="panel metric">
+          <div class="metric-head"><span class="ico" data-ico="cpu"></span><div class="k" data-i18n="dashboard.average_cpu">Average CPU</div></div>
+          <div id="cpu" class="v">-</div>
+        </article>
+        <article class="panel metric">
+          <div class="metric-head"><span class="ico" data-ico="ram"></span><div class="k" data-i18n="dashboard.ram_usage">RAM usage</div></div>
+          <div id="mem" class="v">-</div>
+        </article>
+        <article class="panel metric">
+          <div class="metric-head"><span class="ico" data-ico="ratio"></span><div class="k" data-i18n="dashboard.online_ratio">Online ratio</div></div>
+          <div id="onlineRatio" class="v">-</div>
+        </article>
+        <article class="panel metric">
+          <div class="metric-head"><span class="ico" data-ico="avg"></span><div class="k" data-i18n="dashboard.avg_user_traffic">Avg/user traffic</div></div>
+          <div id="avgUserTraffic" class="v">-</div>
+        </article>
+      </section>
+
+      <section class="band-grid">
+        <article class="panel"><div class="k" data-i18n="dashboard.inbound_total">Inbound total</div><div id="inbound" class="v">-</div></article>
+        <article class="panel"><div class="k" data-i18n="dashboard.users_total">Users total</div><div id="usersTotal" class="v">-</div></article>
+        <article class="panel"><div class="k" data-i18n="dashboard.xray_stats">Xray stats</div><div id="statsState" class="v sm">-</div></article>
+      </section>
+
+      <section class="two-col">
+        <article class="panel">
+          <div class="head-row">
+            <h3 data-i18n="dashboard.online_users">Online Users</h3>
+            <span id="onlineSupportState" class="chip">online metrics: -</span>
+          </div>
+          <div id="onlineUsers" class="online-list"></div>
+        </article>
+        <article class="panel">
+          <div class="head-row">
+            <h3 data-i18n="dashboard.create_key_uri">Create Key + URI</h3>
+            <span id="moodChip" class="chip" data-i18n="dashboard.ready">ready</span>
+          </div>
+          <div class="create-grid">
+            <label><span data-i18n="dashboard.user_id">User ID</span><input id="newUserId" type="number" min="1" placeholder="1001" /></label>
+            <label><span data-i18n="dashboard.level">Level</span><input id="newLevel" type="number" min="0" max="255" value="0" /></label>
+            <button id="createKeyBtn" class="btn primary" data-i18n="dashboard.create">Create</button>
+            <button id="genUserIdBtn" class="btn" data-i18n="dashboard.suggest_id">Suggest ID</button>
+          </div>
+          <div class="created-uri">
+            <label>
+              <span data-i18n="dashboard.created_uri">Last created URI</span>
+              <input id="createdUriValue" readonly placeholder="-" />
+            </label>
+            <button id="copyCreatedUriBtn" class="btn" data-i18n="dashboard.copy">Copy</button>
+          </div>
+          <div id="createMsg" class="status"></div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="head-row"><h3 data-i18n="dashboard.top_users_by_traffic">Top users by traffic</h3></div>
+        <div id="topUsers" class="top-users"></div>
+      </section>
+
+      <section class="panel table-wrap">
+        <div class="head-row controls">
+          <div class="control search">
+            <input id="clientsSearch" placeholder="Search by id, email, uuid..." data-i18n-placeholder="dashboard.search_placeholder" />
+          </div>
+          <div class="control">
+            <select id="clientsSort">
+              <option value="online_desc" data-i18n="dashboard.sort_online_first">Online first</option>
+              <option value="traffic_desc" data-i18n="dashboard.sort_traffic_desc">Traffic: high to low</option>
+              <option value="traffic_asc" data-i18n="dashboard.sort_traffic_asc">Traffic: low to high</option>
+              <option value="id_asc" data-i18n="dashboard.sort_id_asc">User ID: ascending</option>
+              <option value="id_desc" data-i18n="dashboard.sort_id_desc">User ID: descending</option>
+            </select>
+          </div>
+          <div class="control">
+            <select id="clientsFilter">
+              <option value="all" data-i18n="dashboard.filter_all">All clients</option>
+              <option value="online" data-i18n="dashboard.filter_online">Online only</option>
+              <option value="offline" data-i18n="dashboard.filter_offline">Offline only</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="dashboard.table_status">Status</th>
+              <th data-i18n="dashboard.table_user">User</th>
+              <th data-i18n="dashboard.table_email">Email</th>
+              <th data-i18n="dashboard.table_traffic">Traffic</th>
+              <th data-i18n="dashboard.table_uri">URI</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </section>
+    </section>
+  </main>
+  <script src="/web/static/js/theme.js"></script>
+  <script src="/web/static/js/dashboard.js"></script>
+</body>
+</html>
