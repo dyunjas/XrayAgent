@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 set -euo pipefail
 
 if [[ "${EUID}" -ne 0 ]]; then
@@ -26,7 +25,7 @@ source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "[4/5] Creating systemd service..."
+echo "[4/5] Creating/updating systemd service..."
 cat >/etc/systemd/system/lunet-panel.service <<'EOF'
 [Unit]
 Description=Lunet Panel
@@ -37,7 +36,9 @@ Requires=xray.service
 Type=simple
 WorkingDirectory=/opt/lunet-panel
 EnvironmentFile=/opt/lunet-panel/.env
-ExecStart=/opt/lunet-panel/.venv/bin/uvicorn agent_main:app --host 0.0.0.0 --port 8000
+Environment=HOST=0.0.0.0
+Environment=PORT=8000
+ExecStart=/opt/lunet-panel/.venv/bin/python /opt/lunet-panel/agent_main.py
 Restart=always
 RestartSec=3
 
@@ -48,6 +49,7 @@ EOF
 echo "[5/5] Enabling services..."
 systemctl daemon-reload
 systemctl enable --now xray
-systemctl enable --now lunet-panel
+systemctl enable lunet-panel
+systemctl restart lunet-panel
 
 echo "Done. Panel: http://<server-ip>:8000/web/login"
