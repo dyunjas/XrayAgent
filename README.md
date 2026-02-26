@@ -5,7 +5,7 @@
 ## Быстрая установка на сервер (вместе с Xray)
 
 ```bash
-git clone <repo-url> /opt/lunet-panel
+git clone https://github.com/dyunjas/XrayAgent.git /opt/lunet-panel
 cd /opt/lunet-panel
 sudo bash scripts/install_lunet_panel.sh
 ```
