@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -7,61 +7,53 @@
   <script>
     (() => {
       try {
-        const t = localStorage.getItem("lunet_theme") || "dark";
         const l = localStorage.getItem("lunet_lang") || "en";
-        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+        document.documentElement.setAttribute("data-theme", "light");
         document.documentElement.setAttribute("data-lang", l === "ru" ? "ru" : "en");
         document.documentElement.lang = l === "ru" ? "ru" : "en";
       } catch (_) {
-        document.documentElement.setAttribute("data-theme", "dark");
+        document.documentElement.setAttribute("data-theme", "light");
         document.documentElement.setAttribute("data-lang", "en");
         document.documentElement.lang = "en";
       }
     })();
   </script>
-  <link rel="stylesheet" href="/web/static/css/panel.css" />
-  <link rel="stylesheet" href="/web/static/css/dashboard.css" />
+  <link rel="stylesheet" href="/web/static/css/panel.css?v=20260226g" />
+  <link rel="stylesheet" href="/web/static/css/dashboard.css?v=20260226g" />
 </head>
 <body>
   <main class="app-shell">
-    <aside class="side-panel">
-      <div class="brand">
-        <div class="brand-logo">LP</div>
-        <div>
-          <h2 class="brand-title">Lunet Panel</h2>
-          <p class="brand-sub">Xray Management</p>
-        </div>
+    <aside class="side-panel classic-sidebar">
+      <div class="brand-wrap">
+        <a class="project-chip" href="/web">
+          <span class="project-logo">LP</span>
+          <span class="project-meta"><span class="project-name">Lunet Panel</span></span>
+        </a>
       </div>
 
-      <div class="side-group">
-        <div class="side-group-title" data-i18n="sidebar.overview">Overview</div>
-        <a class="side-link active" href="/web" data-i18n="sidebar.home">Home</a>
-      </div>
-      <div class="side-group">
-        <div class="side-group-title" data-i18n="sidebar.management">Management</div>
-        <a class="side-link" href="/web/xray" data-i18n="sidebar.xray_settings">Xray Settings</a>
-        <a class="side-link" href="/web/graphs" data-i18n="sidebar.graphs">Graphs</a>
-      </div>
-      <div class="side-meta">
-        <div data-i18n="sidebar.session">Session</div>
-        <div id="nickLabel">User: -</div>
-        <div class="side-status">
-          <span id="sideDbBadge" class="badge">DB: -</span>
-          <span id="sideStatsBadge" class="badge">Stats: -</span>
+      <nav class="side-nav">
+        <a class="side-nav-link active" href="/web" data-i18n="sidebar.home">Home</a>
+        <a class="side-nav-link" href="/web/graphs" data-i18n="sidebar.graphs">Graphs</a>
+        <a class="side-nav-link" href="/web/xray" data-i18n="sidebar.xray_settings">Xray Settings</a>
+        <a class="side-nav-link" href="/web/settings" data-i18n="sidebar.panel_settings">Panel Settings</a>
+      </nav>
+
+      <div class="side-controls">
+        <div class="side-meta-inline">
+          <div id="nickLabel">User: -</div>
+          <div class="meta-badges">
+            <span id="sideDbBadge" class="badge">DB: -</span>
+            <span id="sideStatsBadge" class="badge">Stats: -</span>
+          </div>
         </div>
-      </div>
-      <div class="side-actions">
-        <button class="btn" data-theme-toggle>Light theme</button>
-        <button class="btn" data-lang-toggle>RU</button>
-        <a class="side-link" href="/web/settings" data-i18n="sidebar.panel_settings">Panel Settings</a>
-        <button id="sideLogout" class="btn" data-i18n="sidebar.logout">Logout</button>
+<button class="btn side-lang" data-lang-toggle aria-label="Language">RU</button>
+        <button id="sideLogout" class="btn logout-btn" data-i18n="sidebar.logout">Logout</button>
       </div>
     </aside>
 
     <section class="content">
       <header class="panel topbar">
         <div>
-          <div class="breadcrumbs" data-i18n="dashboard.breadcrumbs">Home | Lunet Panel Dashboard</div>
           <h1 data-i18n="dashboard.title">Lunet Usage</h1>
           <p class="sub" data-i18n="dashboard.subtitle">Connected users, traffic and quick controls</p>
         </div>
@@ -72,46 +64,30 @@
       </header>
 
       <section class="stats-grid">
-        <article class="panel metric">
-          <div class="metric-head"><span class="ico" data-ico="users"></span><div class="k" data-i18n="dashboard.online_now">Online now</div></div>
-          <div id="onlineNow" class="v">-</div>
-        </article>
-        <article class="panel metric">
-          <div class="metric-head"><span class="ico" data-ico="shield"></span><div class="k" data-i18n="dashboard.active_keys">Active keys</div></div>
-          <div id="active" class="v">-</div>
-        </article>
-        <article class="panel metric">
-          <div class="metric-head"><span class="ico" data-ico="cpu"></span><div class="k" data-i18n="dashboard.average_cpu">Average CPU</div></div>
-          <div id="cpu" class="v">-</div>
-        </article>
-        <article class="panel metric">
-          <div class="metric-head"><span class="ico" data-ico="ram"></span><div class="k" data-i18n="dashboard.ram_usage">RAM usage</div></div>
-          <div id="mem" class="v">-</div>
-        </article>
-        <article class="panel metric">
-          <div class="metric-head"><span class="ico" data-ico="ratio"></span><div class="k" data-i18n="dashboard.online_ratio">Online ratio</div></div>
-          <div id="onlineRatio" class="v">-</div>
-        </article>
-        <article class="panel metric">
-          <div class="metric-head"><span class="ico" data-ico="avg"></span><div class="k" data-i18n="dashboard.avg_user_traffic">Avg/user traffic</div></div>
-          <div id="avgUserTraffic" class="v">-</div>
-        </article>
+        <article class="panel stat-card"><div class="k" data-i18n="dashboard.inbound_total">Inbound total</div><div id="inbound" class="v">-</div></article>
+        <article class="panel stat-card"><div class="k" data-i18n="dashboard.users_total">Users total</div><div id="usersTotal" class="v">-</div></article>
+        <article class="panel stat-card"><div class="k" data-i18n="dashboard.online_ratio">Online ratio</div><div id="onlineRatio" class="v">-</div></article>
+        <article class="panel stat-card"><div class="k" data-i18n="dashboard.avg_user_traffic">Avg/user traffic</div><div id="avgUserTraffic" class="v">-</div></article>
       </section>
 
-      <section class="band-grid">
-        <article class="panel"><div class="k" data-i18n="dashboard.inbound_total">Inbound total</div><div id="inbound" class="v">-</div></article>
-        <article class="panel"><div class="k" data-i18n="dashboard.users_total">Users total</div><div id="usersTotal" class="v">-</div></article>
-        <article class="panel"><div class="k" data-i18n="dashboard.xray_stats">Xray stats</div><div id="statsState" class="v sm">-</div></article>
+      <section class="panel analytics-panel">
+        <div class="analytics-head">
+          <h3 data-i18n="dashboard.online_users">Online Users</h3>
+          <span id="onlineSupportState" class="chip">online metrics: -</span>
+        </div>
+        <div class="analytics-grid">
+          <div id="onlineUsers" class="online-list"></div>
+          <div class="mini-metrics">
+            <div class="mini"><span data-i18n="dashboard.online_now">Online now</span><strong id="onlineNow">-</strong></div>
+            <div class="mini"><span data-i18n="dashboard.active_keys">Active keys</span><strong id="active">-</strong></div>
+            <div class="mini"><span data-i18n="dashboard.average_cpu">Average CPU</span><strong id="cpu">-</strong></div>
+            <div class="mini"><span data-i18n="dashboard.ram_usage">RAM usage</span><strong id="mem">-</strong></div>
+            <div class="mini"><span data-i18n="dashboard.xray_stats">Xray stats</span><strong id="statsState">-</strong></div>
+          </div>
+        </div>
       </section>
 
       <section class="two-col">
-        <article class="panel">
-          <div class="head-row">
-            <h3 data-i18n="dashboard.online_users">Online Users</h3>
-            <span id="onlineSupportState" class="chip">online metrics: -</span>
-          </div>
-          <div id="onlineUsers" class="online-list"></div>
-        </article>
         <article class="panel">
           <div class="head-row">
             <h3 data-i18n="dashboard.create_key_uri">Create Key + URI</h3>
@@ -132,11 +108,11 @@
           </div>
           <div id="createMsg" class="status"></div>
         </article>
-      </section>
 
-      <section class="panel">
-        <div class="head-row"><h3 data-i18n="dashboard.top_users_by_traffic">Top users by traffic</h3></div>
-        <div id="topUsers" class="top-users"></div>
+        <article class="panel">
+          <div class="head-row"><h3 data-i18n="dashboard.top_users_by_traffic">Top users by traffic</h3></div>
+          <div id="topUsers" class="top-users"></div>
+        </article>
       </section>
 
       <section class="panel table-wrap">
@@ -161,6 +137,7 @@
             </select>
           </div>
         </div>
+
         <table>
           <thead>
             <tr>
@@ -176,7 +153,21 @@
       </section>
     </section>
   </main>
-  <script src="/web/static/js/theme.js"></script>
-  <script src="/web/static/js/dashboard.js"></script>
+
+  <script src="/web/static/js/theme.js?v=20260226g"></script>
+  <script src="/web/static/js/dashboard.js?v=20260226g"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+

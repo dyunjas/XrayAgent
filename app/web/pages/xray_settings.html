@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -7,44 +7,39 @@
   <script>
     (() => {
       try {
-        const t = localStorage.getItem("lunet_theme") || "dark";
         const l = localStorage.getItem("lunet_lang") || "en";
-        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+        document.documentElement.setAttribute("data-theme", "light");
         document.documentElement.setAttribute("data-lang", l === "ru" ? "ru" : "en");
         document.documentElement.lang = l === "ru" ? "ru" : "en";
       } catch (_) {
-        document.documentElement.setAttribute("data-theme", "dark");
+        document.documentElement.setAttribute("data-theme", "light");
         document.documentElement.setAttribute("data-lang", "en");
         document.documentElement.lang = "en";
       }
     })();
   </script>
-  <link rel="stylesheet" href="/web/static/css/panel.css" />
-  <link rel="stylesheet" href="/web/static/css/xray_settings.css" />
+  <link rel="stylesheet" href="/web/static/css/panel.css?v=20260226g" />
+  <link rel="stylesheet" href="/web/static/css/xray_settings.css?v=20260226g" />
 </head>
 <body>
   <main class="app-shell">
-    <aside class="side-panel">
-      <div class="brand">
-        <div class="brand-logo">LP</div>
-        <div>
-          <h2 class="brand-title">Lunet Panel</h2>
-          <p class="brand-sub">Xray Management</p>
-        </div>
+    <aside class="side-panel classic-sidebar">
+      <div class="brand-wrap">
+        <a class="project-chip" href="/web">
+          <span class="project-logo">LP</span>
+          <span class="project-meta"><span class="project-name">Lunet Panel</span></span>
+        </a>
       </div>
-      <div class="side-group">
-        <div class="side-group-title" data-i18n="sidebar.overview">Overview</div>
-        <a class="side-link" href="/web" data-i18n="sidebar.home">Home</a>
-      </div>
-      <div class="side-group">
-        <div class="side-group-title" data-i18n="sidebar.management">Management</div>
-        <a class="side-link active" href="/web/xray" data-i18n="sidebar.xray_settings">Xray Settings</a>
-        <a class="side-link" href="/web/graphs" data-i18n="sidebar.graphs">Graphs</a>
-      </div>
-      <div class="side-actions">
-        <button class="btn" data-theme-toggle>Light theme</button>
-        <button class="btn" data-lang-toggle>RU</button>
-        <a class="side-link" href="/web/settings" data-i18n="sidebar.panel_settings">Panel Settings</a>
+
+      <nav class="side-nav">
+        <a class="side-nav-link" href="/web" data-i18n="sidebar.home">Home</a>
+        <a class="side-nav-link" href="/web/graphs" data-i18n="sidebar.graphs">Graphs</a>
+        <a class="side-nav-link active" href="/web/xray" data-i18n="sidebar.xray_settings">Xray Settings</a>
+        <a class="side-nav-link" href="/web/settings" data-i18n="sidebar.panel_settings">Panel Settings</a>
+      </nav>
+
+      <div class="side-controls">
+        <button class="btn side-lang" data-lang-toggle aria-label="Language">RU</button>
         <button class="btn logout-btn" data-i18n="sidebar.logout">Logout</button>
       </div>
     </aside>
@@ -64,66 +59,25 @@
       </header>
 
       <section class="status-cards">
-        <article class="panel stat-mini">
-          <div class="label" data-i18n="xray.db_short">DB</div>
-          <div id="dbBadge" class="value">-</div>
-        </article>
-        <article class="panel stat-mini">
-          <div class="label" data-i18n="xray.stats_api_short">Stats API</div>
-          <div id="statsBadge" class="value">-</div>
-        </article>
-        <article class="panel stat-mini">
-          <div class="label" data-i18n="xray.inbounds_short">Inbounds</div>
-          <div id="inboundsBadge" class="value">-</div>
-        </article>
-        <article class="panel stat-mini">
-          <div class="label" data-i18n="xray.outbounds_short">Outbounds</div>
-          <div id="outboundsBadge" class="value">-</div>
-        </article>
+        <article class="panel stat-mini"><div class="label" data-i18n="xray.db_short">DB</div><div id="dbBadge" class="value">-</div></article>
+        <article class="panel stat-mini"><div class="label" data-i18n="xray.stats_api_short">Stats API</div><div id="statsBadge" class="value">-</div></article>
+        <article class="panel stat-mini"><div class="label" data-i18n="xray.inbounds_short">Inbounds</div><div id="inboundsBadge" class="value">-</div></article>
+        <article class="panel stat-mini"><div class="label" data-i18n="xray.outbounds_short">Outbounds</div><div id="outboundsBadge" class="value">-</div></article>
       </section>
 
       <section class="panel key-vault">
-        <div class="editor-head">
-          <h3 data-i18n="xray.keys_title">Key Materials</h3>
-        </div>
+        <div class="editor-head"><h3 data-i18n="xray.keys_title">Key Materials</h3></div>
         <div class="keys-grid">
-          <label>
-            <span data-i18n="xray.public_key">Public key</span>
-            <div class="key-line">
-              <input id="publicKeyValue" readonly />
-              <button id="copyPublicKeyBtn" class="btn" data-i18n="xray.copy">Copy</button>
-            </div>
-          </label>
-          <label>
-            <span data-i18n="xray.private_key">Private key</span>
-            <div class="key-line">
-              <input id="privateKeyValue" readonly />
-              <button id="copyPrivateKeyBtn" class="btn" data-i18n="xray.copy">Copy</button>
-            </div>
-          </label>
-          <label>
-            <span data-i18n="xray.short_id">Short ID</span>
-            <div class="key-line">
-              <input id="shortIdValue" readonly />
-              <button id="copyShortIdBtn" class="btn" data-i18n="xray.copy">Copy</button>
-            </div>
-          </label>
+          <label><span data-i18n="xray.public_key">Public key</span><div class="key-line"><input id="publicKeyValue" readonly /><button id="copyPublicKeyBtn" class="btn" data-i18n="xray.copy">Copy</button></div></label>
+          <label><span data-i18n="xray.private_key">Private key</span><div class="key-line"><input id="privateKeyValue" readonly /><button id="copyPrivateKeyBtn" class="btn" data-i18n="xray.copy">Copy</button></div></label>
+          <label><span data-i18n="xray.short_id">Short ID</span><div class="key-line"><input id="shortIdValue" readonly /><button id="copyShortIdBtn" class="btn" data-i18n="xray.copy">Copy</button></div></label>
         </div>
       </section>
 
       <section class="grid">
-        <article class="panel">
-          <h3 data-i18n="xray.runtime">Runtime Summary</h3>
-          <div id="coreData" class="kv"></div>
-        </article>
-        <article class="panel">
-          <h3 data-i18n="xray.dependencies">Dependencies</h3>
-          <div id="depsData" class="kv"></div>
-        </article>
-        <article class="panel">
-          <h3 data-i18n="xray.database">Database</h3>
-          <div id="dbData" class="kv"></div>
-        </article>
+        <article class="panel"><h3 data-i18n="xray.runtime">Runtime Summary</h3><div id="coreData" class="kv"></div></article>
+        <article class="panel"><h3 data-i18n="xray.dependencies">Dependencies</h3><div id="depsData" class="kv"></div></article>
+        <article class="panel"><h3 data-i18n="xray.database">Database</h3><div id="dbData" class="kv"></div></article>
       </section>
 
       <section class="panel">
@@ -140,10 +94,7 @@
       </section>
 
       <section class="panel">
-        <div class="api-head">
-          <h3 data-i18n="xray.api">Developer API (Xray Management)</h3>
-          <input id="apiSearch" data-i18n-placeholder="xray.search_api" placeholder="Search endpoints..." />
-        </div>
+        <div class="api-head"><h3 data-i18n="xray.api">Developer API (Xray Management)</h3><input id="apiSearch" data-i18n-placeholder="xray.search_api" placeholder="Search endpoints..." /></div>
         <div class="api-table-wrap">
           <table class="api-table">
             <thead>
@@ -162,7 +113,20 @@
       <div id="resyncState" class="status"></div>
     </section>
   </main>
-  <script src="/web/static/js/theme.js"></script>
-  <script src="/web/static/js/xray_settings.js"></script>
+  <script src="/web/static/js/theme.js?v=20260226g"></script>
+  <script src="/web/static/js/xray_settings.js?v=20260226g"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+

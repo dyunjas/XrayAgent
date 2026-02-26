@@ -1,4 +1,4 @@
-ï»¿const serverCanvas = document.getElementById("serverChart");
+const serverCanvas = document.getElementById("serverChart");
 const serverCtx = serverCanvas.getContext("2d");
 const xrayCanvas = document.getElementById("xrayChart");
 const xrayCtx = xrayCanvas.getContext("2d");
@@ -7,6 +7,12 @@ const stateEl = document.getElementById("graphState");
 const serverPoints = [];
 const xrayPoints = [];
 let lastSample = null;
+let prevCountersSample = null;
+
+function n(v) {
+  const x = Number(v);
+  return Number.isFinite(x) ? x : 0;
+}
 
 function t(key, fallback) {
   return window.LunetI18n?.t(key, fallback) || fallback || key;
@@ -28,8 +34,8 @@ function pushPoint(arr, sample, maxPoints) {
 
 function drawGrid(ctx, canvas) {
   const css = getComputedStyle(document.documentElement);
-  const bg = (css.getPropertyValue("--panel-2") || "#0f1d33").trim();
-  const line = (css.getPropertyValue("--line") || "#2a3b56").trim();
+  const bg = (css.getPropertyValue("--card-soft") || "#eef5ff").trim();
+  const line = (css.getPropertyValue("--line") || "#c7d7ef").trim();
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = line;
@@ -70,14 +76,19 @@ function drawServerChart(lineWidth) {
 
 function drawXrayChart(lineWidth) {
   drawGrid(xrayCtx, xrayCanvas);
-  const inbound = xrayPoints.map((p) => p.inbound_total || 0);
-  const users = xrayPoints.map((p) => p.users_total || 0);
+  const inboundRate = xrayPoints.map((p) => n(p.inbound_rate));
+  const usersRate = xrayPoints.map((p) => n(p.users_rate));
+  const inboundTotal = xrayPoints.map((p) => n(p.inbound_total));
+  const usersTotal = xrayPoints.map((p) => n(p.users_total));
   const keys = xrayPoints.map((p) => p.active_keys || 0);
   const online = xrayPoints.map((p) => p.online_now || 0);
-  const trafficMax = Math.max(...inbound, ...users, 1);
+  const ratesActive = inboundRate.some((v) => v > 0) || usersRate.some((v) => v > 0);
+  const inboundSeries = ratesActive ? inboundRate : inboundTotal;
+  const usersSeries = ratesActive ? usersRate : usersTotal;
+  const trafficMax = Math.max(...inboundSeries, ...usersSeries, 1);
   const usersMax = Math.max(...keys, ...online, 1);
-  drawLine(xrayCtx, xrayCanvas, inbound, "#3ac9ff", trafficMax, lineWidth);
-  drawLine(xrayCtx, xrayCanvas, users, "#38d39f", trafficMax, lineWidth);
+  drawLine(xrayCtx, xrayCanvas, inboundSeries, "#3ac9ff", trafficMax, lineWidth);
+  drawLine(xrayCtx, xrayCanvas, usersSeries, "#38d39f", trafficMax, lineWidth);
   drawLine(xrayCtx, xrayCanvas, keys, "#8aa4ff", usersMax, lineWidth);
   drawLine(xrayCtx, xrayCanvas, online, "#53e0bf", usersMax, lineWidth);
 }
@@ -90,7 +101,7 @@ function renderCharts() {
 
 function renderLiveState(sample) {
   if (!sample) return;
-  const pattern = t("graphs.live_status", "Live â€¢ Keys {keys} â€¢ Online {online} â€¢ CPU {cpu}%");
+  const pattern = t("graphs.live_status", "Live • Keys {keys} • Online {online} • CPU {cpu}%");
   stateEl.className = "status ok";
   stateEl.textContent = pattern
     .replace("{keys}", String(sample.active_keys ?? 0))
@@ -106,6 +117,32 @@ async function poll() {
       return;
     }
     const data = await response.json();
+    const ts = n(data.ts);
+    const fallbackSec = getGraphPrefs().refreshSec;
+    const deltaSec = prevCountersSample && ts > Number(prevCountersSample.ts || 0)
+      ? Math.max(1, ts - Number(prevCountersSample.ts || 0))
+      : Math.max(1, fallbackSec);
+    const inboundAvailable = data.inbound_stats_available !== false;
+    const usersAvailable = data.users_stats_available !== false;
+    const rawInboundTotal = n(data.inbound_total);
+    const rawUsersTotal = n(data.users_total);
+    const prevInbound = n(prevCountersSample?.inbound_total);
+    const prevUsers = n(prevCountersSample?.users_total);
+    const inboundTotal = inboundAvailable ? rawInboundTotal : prevInbound;
+    const usersTotal = usersAvailable ? rawUsersTotal : prevUsers;
+    const inboundDelta = inboundAvailable
+      ? (inboundTotal >= prevInbound ? (inboundTotal - prevInbound) : inboundTotal)
+      : 0;
+    const usersDelta = usersAvailable
+      ? (usersTotal >= prevUsers ? (usersTotal - prevUsers) : usersTotal)
+      : 0;
+    data.inbound_rate = inboundDelta / deltaSec;
+    data.users_rate = usersDelta / deltaSec;
+    prevCountersSample = {
+      ts,
+      inbound_total: inboundTotal,
+      users_total: usersTotal,
+    };
     const prefs = getGraphPrefs();
     pushPoint(serverPoints, data, prefs.maxPoints);
     pushPoint(xrayPoints, data, prefs.maxPoints);
@@ -138,3 +175,5 @@ document.addEventListener("lunet:lang-changed", () => {
 });
 poll();
 setInterval(poll, getGraphPrefs().refreshSec * 1000);
+
+

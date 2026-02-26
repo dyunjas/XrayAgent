@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.logging_config import setup_logging
 
-from app.routers import health, stats, db_health, debug, xray, metrics, web
+from app.routers import health, stats, db_health, debug, xray, bearer_api, metrics, web
 from app.middleware.prom import PromMiddleware
 
 from app.deps import SessionLocal
@@ -35,6 +35,7 @@ app.include_router(stats)
 app.include_router(db_health)
 app.include_router(debug)
 app.include_router(xray)
+app.include_router(bearer_api)
 app.include_router(metrics)
 app.include_router(web)
 

@@ -297,7 +297,11 @@ document.getElementById("resyncBtn").addEventListener("click", async () => {
 document.getElementById("resetUsersBtn").addEventListener("click", async () => {
   await runQuickAction("/web/api/dashboard/reset_users_traffic", "dashboard.reset_completed", "Users traffic reset completed");
 });
-document.getElementById("sideLogout").addEventListener("click", logout);
+const sideLogoutEl = document.getElementById("sideLogout");
+if (sideLogoutEl) sideLogoutEl.addEventListener("click", logout);
+document.querySelectorAll(".logout-btn").forEach((btn) => {
+  btn.addEventListener("click", logout);
+});
 document.addEventListener("lunet:lang-changed", async () => {
   rerenderLanguageSensitive();
   await loadSideStatus();

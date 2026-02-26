@@ -1,4 +1,4 @@
-﻿.actions {
+.actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -17,7 +17,7 @@
   width: 320px;
   height: 320px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(43, 207, 232, 0.24), transparent 65%);
+  background: radial-gradient(circle, rgba(79, 132, 255, 0.14), transparent 65%);
   pointer-events: none;
 }
 
@@ -36,7 +36,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, rgba(69, 187, 255, 0.11), transparent 55%);
+  background: linear-gradient(120deg, rgba(95, 149, 255, 0.08), transparent 55%);
   pointer-events: none;
 }
 
@@ -54,7 +54,7 @@
 }
 
 .key-vault {
-  border-color: #2d4e74;
+  border-color: #c6d7ef;
 }
 
 .keys-grid {
@@ -105,7 +105,7 @@ h3 {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 9px 11px;
-  background: linear-gradient(170deg, var(--panel-2), rgba(23, 41, 69, 0.8));
+  background: linear-gradient(170deg, #ffffff, #eff6ff);
 }
 
 html[data-theme="light"] .kv-row {
@@ -228,3 +228,4 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+

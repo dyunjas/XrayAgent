@@ -25,6 +25,8 @@ class Settings(BaseModel):
 
     sync_server_id: int = int(os.getenv("XRAY_SYNC_SERVER_ID", "1"))
 
+    traffic_sqlite_path: str = os.getenv("XRAY_TRAFFIC_SQLITE_PATH", "./data/traffic_snapshot.sqlite3")
+
     db_dsn: str = (
         os.getenv("XRAY_DB_DSN")
         or os.getenv("PG_DSN")
@@ -52,3 +54,5 @@ class Settings(BaseModel):
 
 
 settings = Settings()
+
+

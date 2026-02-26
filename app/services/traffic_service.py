@@ -134,6 +134,23 @@ class TrafficService:
 
     def get_users_traffic(self, emails: list[str]) -> dict[str, dict]:
         out: dict[str, dict] = {}
+        try:
+            values = self._statsquery_map()
+            for email in emails:
+                up_name = f"user>>>{email}>>>traffic>>>uplink"
+                down_name = f"user>>>{email}>>>traffic>>>downlink"
+                up_val = int(values.get(up_name, 0))
+                down_val = int(values.get(down_name, 0))
+                out[email] = {
+                    "available": True,
+                    "uplink": up_val,
+                    "downlink": down_val,
+                    "total": up_val + down_val,
+                }
+            return out
+        except Exception:
+            pass
+
         for email in emails:
             try:
                 up = self._get_stat(f"user>>>{email}>>>traffic>>>uplink")
@@ -157,24 +174,36 @@ class TrafficService:
         out: dict[str, dict] = {}
         now = time.time()
         activity_window = max(15, int(settings.xray_online_activity_window_sec))
+        stat_values: dict[str, int] = {}
+        try:
+            stat_values = self._statsquery_map()
+        except Exception:
+            stat_values = {}
         for email in emails:
             # Newer Xray builds may expose per-user online counters when enabled in policy stats.
             # If not available, we return supported=False and online=False.
             supported = False
             value = 0
-            for stat_name in (
+            online_names = (
                 f"user>>>{email}>>>online",
                 f"user>>>{email}>>>online>>>count",
-            ):
-                try:
-                    stat = self._get_stat(stat_name)
-                    if bool(stat.get("missing")):
-                        continue
-                    value = int(stat["value"])
+            )
+            for stat_name in online_names:
+                if stat_name in stat_values:
+                    value = int(stat_values.get(stat_name, 0))
                     supported = True
                     break
-                except Exception:
-                    continue
+            if not supported:
+                for stat_name in online_names:
+                    try:
+                        stat = self._get_stat(stat_name)
+                        if bool(stat.get("missing")):
+                            continue
+                        value = int(stat["value"])
+                        supported = True
+                        break
+                    except Exception:
+                        continue
 
             inferred = False
             if not supported:

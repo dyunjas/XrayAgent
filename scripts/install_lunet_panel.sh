@@ -7,7 +7,7 @@ fi
 
 echo "[1/5] Installing system dependencies..."
 apt-get update
-apt-get install -y curl unzip python3 python3-venv python3-pip
+apt-get install -y curl unzip git protobuf-compiler python3 python3-venv python3-pip
 
 echo "[2/5] Installing Xray..."
 if ! command -v xray >/dev/null 2>&1; then
@@ -16,7 +16,20 @@ else
   echo "Xray already installed"
 fi
 
-echo "[3/5] Preparing Lunet Panel runtime..."
+echo "[3/6] Preparing Xray protobuf assets..."
+if [[ ! -d /opt/xray-protos/proxy || ! -f /opt/xray-protos/proxy/vless/account.proto ]]; then
+  rm -rf /opt/xray-protos
+  git clone --depth=1 https://github.com/XTLS/Xray-core.git /opt/xray-protos
+fi
+
+find /opt/xray-protos -name "*.proto" > /tmp/xray-protos-files.txt
+if [[ -s /tmp/xray-protos-files.txt ]]; then
+  protoc -I /opt/xray-protos --include_imports \
+    --descriptor_set_out=/opt/xray-protos/xray.protoset \
+    @/tmp/xray-protos-files.txt
+fi
+
+echo "[4/6] Preparing Lunet Panel runtime..."
 mkdir -p /opt/lunet-panel
 SRC_DIR="$(realpath .)"
 DST_DIR="/opt/lunet-panel"
@@ -31,7 +44,7 @@ source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "[4/5] Creating/updating systemd service..."
+echo "[5/6] Creating/updating systemd service..."
 cat >/etc/systemd/system/lunet-panel.service <<'EOF'
 [Unit]
 Description=Lunet Panel
@@ -43,7 +56,7 @@ Type=simple
 WorkingDirectory=/opt/lunet-panel
 EnvironmentFile=/opt/lunet-panel/.env
 Environment=HOST=0.0.0.0
-Environment=PORT=8000
+Environment=PORT=8020
 ExecStart=/opt/lunet-panel/.venv/bin/python /opt/lunet-panel/agent_main.py
 Restart=always
 RestartSec=3
@@ -52,10 +65,10 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 
-echo "[5/5] Enabling services..."
+echo "[6/6] Enabling services..."
 systemctl daemon-reload
 systemctl enable --now xray
 systemctl enable lunet-panel
 systemctl restart lunet-panel
 
-echo "Done. Panel: http://<server-ip>:8000/web/login"
+echo "Done. Panel: http://<server-ip>:8020/web/login"

@@ -4,27 +4,44 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lunet Panel | Resets</title>
-  <link rel="stylesheet" href="/web/static/css/panel.css" />
-  <link rel="stylesheet" href="/web/static/css/resets.css" />
+  <script>
+    (() => {
+      try {
+        const l = localStorage.getItem("lunet_lang") || "en";
+        document.documentElement.setAttribute("data-theme", "light");
+        document.documentElement.setAttribute("data-lang", l === "ru" ? "ru" : "en");
+        document.documentElement.lang = l === "ru" ? "ru" : "en";
+      } catch (_) {
+        document.documentElement.setAttribute("data-theme", "light");
+        document.documentElement.setAttribute("data-lang", "en");
+        document.documentElement.lang = "en";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/web/static/css/panel.css?v=20260226g" />
+  <link rel="stylesheet" href="/web/static/css/resets.css?v=20260226g" />
 </head>
 <body>
   <main class="app-shell">
-    <aside class="side-panel">
-      <div class="brand">
-        <div class="brand-logo">LP</div>
-        <div>
-          <h2 class="brand-title">Lunet Panel</h2>
-          <p class="brand-sub">Xray Management</p>
-        </div>
+    <aside class="side-panel classic-sidebar">
+      <div class="brand-wrap">
+        <a class="project-chip" href="/web">
+          <span class="project-logo">LP</span>
+          <span class="project-meta"><span class="project-name">Lunet Panel</span></span>
+        </a>
       </div>
-      <div class="side-group">
-        <div class="side-group-title">Overview</div>
-        <a class="side-link" href="/web">Home</a>
-      </div>
-      <div class="side-group">
-        <div class="side-group-title">Management</div>
-        <a class="side-link" href="/web/xray">Xray Settings</a>
-        <a class="side-link" href="/web/graphs">Graphs</a>
+
+      <nav class="side-nav">
+        <a class="side-nav-link" href="/web" data-i18n="sidebar.home">Home</a>
+        <a class="side-nav-link" href="/web/graphs" data-i18n="sidebar.graphs">Graphs</a>
+        <a class="side-nav-link" href="/web/xray" data-i18n="sidebar.xray_settings">Xray Settings</a>
+        <a class="side-nav-link" href="/web/settings" data-i18n="sidebar.panel_settings">Panel Settings</a>
+        <a class="side-nav-link active" href="/web/resets">Resets</a>
+      </nav>
+
+      <div class="side-controls">
+        <button class="btn side-lang" data-lang-toggle aria-label="Language">RU</button>
+        <button class="btn logout-btn" data-i18n="sidebar.logout">Logout</button>
       </div>
     </aside>
 
@@ -36,7 +53,6 @@
             <h1>Traffic Resets</h1>
             <p class="sub">Reset inbound and user counters in Xray stats</p>
           </div>
-          <button id="logout" class="btn">Logout</button>
         </header>
       </section>
 
@@ -59,7 +75,20 @@
       </section>
     </section>
   </main>
-  <script src="/web/static/js/theme.js"></script>
-  <script src="/web/static/js/resets.js"></script>
+  <script src="/web/static/js/theme.js?v=20260226g"></script>
+  <script src="/web/static/js/resets.js?v=20260226g"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+

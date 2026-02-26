@@ -5,6 +5,9 @@ const resultEl = document.getElementById("result");
 if (window.LunetTheme && window.LunetI18n) {
   window.LunetTheme.initTheme();
   window.LunetI18n.initLang();
+  window.LunetTheme.bindThemeToggle();
+  window.LunetI18n.bindLangToggle();
+  window.LunetI18n.bindStorageSync?.();
 }
 
 document.getElementById("resetBtn").addEventListener("click", async () => {
@@ -30,7 +33,9 @@ document.getElementById("resetBtn").addEventListener("click", async () => {
   }
 });
 
-document.getElementById("logout").addEventListener("click", async () => {
-  await fetch("/web/logout", { method: "POST" });
-  window.location.href = "/web/login";
+document.querySelectorAll(".logout-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    await fetch("/web/logout", { method: "POST" });
+    window.location.href = "/web/login";
+  });
 });

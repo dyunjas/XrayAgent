@@ -1,23 +1,44 @@
+.graphs-page .content {
+  gap: 14px;
+}
+
+.graphs-page .side-panel {
+  border-color: #bfd0eb;
+  box-shadow: inset 0 0 0 1px rgba(92, 134, 201, 0.15);
+}
+
+.graphs-page .side-nav-link {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.graphs-page .side-nav-link.active {
+  background: linear-gradient(180deg, #dce9ff, #d2e3ff);
+  border-color: #9fbcf1;
+}
+
 .canvas-wrap {
   margin-top: 0;
   overflow: hidden;
+  background: linear-gradient(180deg, #fbfdff, #f3f8ff);
 }
 
 .chart-title {
-  font-size: 14px;
-  color: var(--muted);
+  font-size: 13px;
+  color: #6c84ab;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 8px;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+  font-weight: 700;
 }
 
 canvas {
   width: 100%;
   height: auto;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--panel-2);
-  box-shadow: inset 0 0 0 1px rgba(99, 165, 234, 0.08);
+  border: 1px solid #c9daf3;
+  border-radius: 14px;
+  background: linear-gradient(170deg, #ffffff, #eef5ff);
+  box-shadow: inset 0 0 0 1px rgba(95, 149, 255, 0.18);
 }
 
 .legend {
@@ -25,8 +46,8 @@ canvas {
   display: flex;
   gap: 12px;
   align-items: center;
-  color: var(--muted);
-  font-size: 13px;
+  color: #627da7;
+  font-size: 12px;
   flex-wrap: wrap;
   row-gap: 8px;
 }
@@ -48,11 +69,11 @@ canvas {
 
 @media (max-width: 760px) {
   .chart-title {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .legend {
-    font-size: 12px;
+    font-size: 11px;
     gap: 8px;
   }
 }

@@ -18,6 +18,7 @@ from app.services.stats_service import StatsService
 from app.services.xray_config_service import XrayConfigService
 from app.services.sync_service import SyncService
 from app.services.traffic_service import TrafficService
+from app.services.persistent_traffic_service import PersistentTrafficService
 from app.services.xray_service import XrayService
 from app.utils.email import email_for_key, email_for_user_id
 from app.utils.web_auth import create_session_token, get_nick_from_session, verify_credentials
@@ -31,6 +32,7 @@ traffic_service = TrafficService()
 xray_service = XrayService()
 sync_service = SyncService(xray=xray_service)
 xray_cfg_service = XrayConfigService()
+persistent_traffic_service = PersistentTrafficService()
 
 WEB_DIR = Path(__file__).resolve().parents[1] / "web"
 PAGES_DIR = WEB_DIR / "pages"
@@ -64,6 +66,9 @@ def _management_endpoints() -> list[dict]:
         {"method": "POST", "path": "/add_user", "auth": "Bearer", "description": "Add user to Xray inbound"},
         {"method": "POST", "path": "/remove_user", "auth": "Bearer", "description": "Remove user by email"},
         {"method": "POST", "path": "/resync", "auth": "Bearer", "description": "Resync active keys from DB to Xray"},
+        {"method": "GET", "path": "/user_traffic", "auth": "Bearer", "description": "Current and persisted traffic by user_id/email"},
+        {"method": "GET", "path": "/server_load", "auth": "Bearer", "description": "Server load and resource usage"},
+        {"method": "GET", "path": "/xray_stats", "auth": "Bearer", "description": "Xray summary: traffic, users, online"},
         {"method": "GET", "path": "/web/api/dashboard", "auth": "Cookie", "description": "Dashboard data including online users"},
         {"method": "POST", "path": "/web/api/keys", "auth": "Cookie", "description": "Create user key + add user in Xray"},
         {"method": "GET", "path": "/web/api/xray/settings", "auth": "Cookie", "description": "Xray and dependency status"},
@@ -175,12 +180,33 @@ def web_dashboard_api(
     db: Session = Depends(get_db),
 ):
     nick = _api_auth_nick(request)
+    persistent_traffic_service.ensure_table(db)
     keys = _active_keys(db)
 
     emails = [email_for_key(k) for k in keys]
     user_traffic = traffic_service.get_users_traffic(emails)
     user_online = traffic_service.get_users_online(emails, user_traffic)
     inbound = traffic_service.get_inbound_traffic()
+    traffic_by_user_id = {
+        int(k.user_id): user_traffic.get(
+            email_for_key(k), {"available": False, "uplink": 0, "downlink": 0, "total": 0}
+        )
+        for k in keys
+    }
+    persisted_by_user_id = persistent_traffic_service.apply_snapshots_bulk(
+        db,
+        server_id=settings.sync_server_id,
+        snapshots=[
+            {
+                "user_id": int(k.user_id),
+                "email": email_for_key(k),
+                "available": bool(traffic_by_user_id[int(k.user_id)]["available"]),
+                "current_uplink": int(traffic_by_user_id[int(k.user_id)]["uplink"]),
+                "current_downlink": int(traffic_by_user_id[int(k.user_id)]["downlink"]),
+            }
+            for k in keys
+        ],
+    )
 
     users = []
     total_user_up = 0
@@ -191,10 +217,12 @@ def web_dashboard_api(
 
     for k in keys:
         email = email_for_key(k)
-        traffic = user_traffic.get(email, {"available": False, "uplink": 0, "downlink": 0, "total": 0})
+        traffic = traffic_by_user_id.get(int(k.user_id), {"available": False, "uplink": 0, "downlink": 0, "total": 0})
         stats_available = stats_available or traffic["available"]
-        total_user_up += int(traffic["uplink"])
-        total_user_down += int(traffic["downlink"])
+        persisted = persisted_by_user_id.get(int(k.user_id), {"uplink": 0, "downlink": 0, "total": 0})
+
+        total_user_up += int(persisted["uplink"])
+        total_user_down += int(persisted["downlink"])
         online_data = user_online.get(email, {"supported": False, "online": False, "value": 0})
         if bool(online_data["supported"]):
             online_supported_users += 1
@@ -206,15 +234,20 @@ def web_dashboard_api(
                 "uuid": k.uuid,
                 "email": email,
                 "uri": k.uri,
-                "uplink": int(traffic["uplink"]),
-                "downlink": int(traffic["downlink"]),
-                "total": int(traffic["total"]),
+                "uplink": int(persisted["uplink"]),
+                "downlink": int(persisted["downlink"]),
+                "total": int(persisted["total"]),
+                "current_uplink": int(traffic["uplink"]),
+                "current_downlink": int(traffic["downlink"]),
+                "current_total": int(traffic["total"]),
                 "stats_available": bool(traffic["available"]),
                 "online": bool(online_data["online"]),
                 "online_supported": bool(online_data["supported"]),
                 "online_value": int(online_data["value"]),
             }
         )
+
+    db.commit()
 
     users_sorted = sorted(users, key=lambda u: (not u["online"], -u["total"], u["user_id"]))
     top_users = sorted(users, key=lambda u: u["total"], reverse=True)[:5]
@@ -253,11 +286,18 @@ def web_dashboard_resync(request: Request, db: Session = Depends(get_db)):
 @router.post("/web/api/dashboard/reset_users_traffic", include_in_schema=False)
 def web_dashboard_reset_users_traffic(request: Request, db: Session = Depends(get_db)):
     _api_auth_nick(request)
+    persistent_traffic_service.ensure_table(db)
     keys = _active_keys(db)
     emails = [email_for_key(k) for k in keys]
+    user_ids = [int(k.user_id) for k in keys]
+    users_reset = traffic_service.reset_users_traffic(emails)
+    snapshots_reset = persistent_traffic_service.reset_users(
+        db, server_id=settings.sync_server_id, user_ids=user_ids
+    )
     return {
         "ok": True,
-        "users": traffic_service.reset_users_traffic(emails),
+        "users": users_reset,
+        "snapshots_reset": snapshots_reset,
     }
 
 
@@ -427,8 +467,10 @@ def web_reset_traffic(
     db: Session = Depends(get_db),
 ):
     _api_auth_nick(request)
+    persistent_traffic_service.ensure_table(db)
     keys = _active_keys(db)
     emails = [email_for_key(k) for k in keys]
+    user_ids = [int(k.user_id) for k in keys]
 
     inbound = {"ok": True, "available": True, "reset_total": 0, "reset_uplink": 0, "reset_downlink": 0}
     users = {"ok": True, "available": True, "reset_total": 0, "reset_uplink": 0, "reset_downlink": 0}
@@ -437,6 +479,9 @@ def web_reset_traffic(
         inbound = traffic_service.reset_inbound_traffic()
     if payload.scope in ("all", "users"):
         users = traffic_service.reset_users_traffic(emails)
+        persistent_traffic_service.reset_users(
+            db, server_id=settings.sync_server_id, user_ids=user_ids
+        )
 
     return {
         "ok": True,
@@ -449,15 +494,38 @@ def web_reset_traffic(
 @router.get("/web/api/graphs/live", include_in_schema=False)
 def web_graphs_live(request: Request, db: Session = Depends(get_db)):
     _api_auth_nick(request)
+    persistent_traffic_service.ensure_table(db)
     keys = _active_keys(db)
     emails = [email_for_key(k) for k in keys]
 
     server = stats_service.get_stats()
     inbound = traffic_service.get_inbound_traffic()
     users_map = traffic_service.get_users_traffic(emails)
-    users_total = sum(int(v["total"]) for v in users_map.values())
+    traffic_by_user_id = {
+        int(k.user_id): users_map.get(
+            email_for_key(k), {"available": False, "uplink": 0, "downlink": 0, "total": 0}
+        )
+        for k in keys
+    }
+    persisted_by_user_id = persistent_traffic_service.apply_snapshots_bulk(
+        db,
+        server_id=settings.sync_server_id,
+        snapshots=[
+            {
+                "user_id": int(k.user_id),
+                "email": email_for_key(k),
+                "available": bool(traffic_by_user_id[int(k.user_id)]["available"]),
+                "current_uplink": int(traffic_by_user_id[int(k.user_id)]["uplink"]),
+                "current_downlink": int(traffic_by_user_id[int(k.user_id)]["downlink"]),
+            }
+            for k in keys
+        ],
+    )
+    users_total = sum(int(v["total"]) for v in persisted_by_user_id.values())
+    users_stats_available = any(bool(v["available"]) for v in traffic_by_user_id.values()) if keys else False
     users_online_map = traffic_service.get_users_online(emails, users_map)
     online_now = sum(1 for v in users_online_map.values() if bool(v.get("online")))
+    db.commit()
 
     return {
         "ok": True,
@@ -468,5 +536,7 @@ def web_graphs_live(request: Request, db: Session = Depends(get_db)):
         "users_total": int(users_total),
         "active_keys": len(keys),
         "online_now": int(online_now),
-        "stats_available": bool(inbound["available"]),
+        "inbound_stats_available": bool(inbound["available"]),
+        "stats_available": bool(inbound["available"] or users_stats_available),
+        "users_stats_available": bool(users_stats_available),
     }
