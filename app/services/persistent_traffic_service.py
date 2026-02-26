@@ -211,7 +211,11 @@ class PersistentTrafficService:
 
         result: dict[int, dict[str, int]] = {}
         now = datetime.now(timezone.utc).isoformat()
-        user_ids = [int(item["user_id"]) for item in snapshots]
+        snapshots_by_user_id: dict[int, dict] = {}
+        for item in snapshots:
+            snapshots_by_user_id[int(item["user_id"])] = item
+        normalized_snapshots = list(snapshots_by_user_id.values())
+        user_ids = list(snapshots_by_user_id.keys())
 
         with self._lock:
             with self._connect() as conn:
@@ -226,7 +230,7 @@ class PersistentTrafficService:
                 ).fetchall()
                 by_user_id = {int(row["user_id"]): row for row in existing_rows}
 
-                for item in snapshots:
+                for item in normalized_snapshots:
                     uid = int(item["user_id"])
                     email = str(item.get("email") or "")
                     cur_up = max(0, int(item.get("current_uplink", 0) or 0))
@@ -235,30 +239,48 @@ class PersistentTrafficService:
                     row = by_user_id.get(uid)
 
                     if row is None:
-                        conn.execute(
-                            """
-                            INSERT INTO vpn_user_traffic_snapshot (
-                                server_id, user_id, email, last_uplink, last_downlink,
-                                total_uplink, total_downlink, updated_at
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                            """,
-                            (
-                                int(server_id),
-                                uid,
-                                email,
-                                cur_up,
-                                cur_down,
-                                cur_up,
-                                cur_down,
-                                now,
-                            ),
-                        )
-                        result[uid] = {
-                            "uplink": cur_up,
-                            "downlink": cur_down,
-                            "total": cur_up + cur_down,
-                        }
-                        continue
+                        try:
+                            conn.execute(
+                                """
+                                INSERT INTO vpn_user_traffic_snapshot (
+                                    server_id, user_id, email, last_uplink, last_downlink,
+                                    total_uplink, total_downlink, updated_at
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                """,
+                                (
+                                    int(server_id),
+                                    uid,
+                                    email,
+                                    cur_up,
+                                    cur_down,
+                                    cur_up,
+                                    cur_down,
+                                    now,
+                                ),
+                            )
+                            by_user_id[uid] = {
+                                "last_uplink": cur_up,
+                                "last_downlink": cur_down,
+                                "total_uplink": cur_up,
+                                "total_downlink": cur_down,
+                            }
+                            result[uid] = {
+                                "uplink": cur_up,
+                                "downlink": cur_down,
+                                "total": cur_up + cur_down,
+                            }
+                            continue
+                        except sqlite3.IntegrityError:
+                            row = conn.execute(
+                                """
+                                SELECT last_uplink, last_downlink, total_uplink, total_downlink
+                                FROM vpn_user_traffic_snapshot
+                                WHERE server_id = ? AND user_id = ?
+                                """,
+                                (int(server_id), uid),
+                            ).fetchone()
+                            if row is None:
+                                raise
 
                     last_up = max(0, int(row["last_uplink"] or 0))
                     last_down = max(0, int(row["last_downlink"] or 0))
