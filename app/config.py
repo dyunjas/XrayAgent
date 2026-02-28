@@ -32,6 +32,11 @@ class Settings(BaseModel):
         or os.getenv("PG_DSN")
         or "postgresql+psycopg2://dyunja:Vjq522DkflbCkfd@46.149.71.206:5432/default_db"
     )
+    db_pool_mode: str = os.getenv("XRAY_DB_POOL_MODE", "null").lower()
+    db_pool_size: int = int(os.getenv("XRAY_DB_POOL_SIZE", "2"))
+    db_max_overflow: int = int(os.getenv("XRAY_DB_MAX_OVERFLOW", "0"))
+    db_pool_recycle: int = int(os.getenv("XRAY_DB_POOL_RECYCLE", "300"))
+    db_pool_timeout: int = int(os.getenv("XRAY_DB_POOL_TIMEOUT", "10"))
 
     service_name: str = os.getenv("XRAY_AGENT_NAME", "Lunet Panel")
     version: str = os.getenv("XRAY_AGENT_VERSION", "1.0.5")

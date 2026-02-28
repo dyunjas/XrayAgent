@@ -9,7 +9,7 @@ from app.logging_config import setup_logging
 from app.routers import health, stats, db_health, debug, xray, bearer_api, metrics, web
 from app.middleware.prom import PromMiddleware
 
-from app.deps import SessionLocal
+from app.deps import SessionLocal, engine
 from app.services.xray_service import XrayService
 from app.services.sync_service import SyncService
 
@@ -48,3 +48,8 @@ def startup_sync():
         sync.startup_sync(db)
     finally:
         db.close()
+
+
+@app.on_event("shutdown")
+def shutdown_db():
+    engine.dispose()
