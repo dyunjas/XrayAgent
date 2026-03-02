@@ -67,6 +67,7 @@ def _management_endpoints() -> list[dict]:
         {"method": "POST", "path": "/remove_user", "auth": "Bearer", "description": "Remove user by email"},
         {"method": "POST", "path": "/resync", "auth": "Bearer", "description": "Resync active keys from DB to Xray"},
         {"method": "GET", "path": "/user_traffic", "auth": "Bearer", "description": "Current and persisted traffic by user_id/email"},
+        {"method": "POST", "path": "/reset_user_traffic", "auth": "Bearer", "description": "Reset traffic counters for one user"},
         {"method": "GET", "path": "/server_load", "auth": "Bearer", "description": "Server load and resource usage"},
         {"method": "GET", "path": "/xray_stats", "auth": "Bearer", "description": "Xray summary: traffic, users, online"},
         {"method": "GET", "path": "/web/api/dashboard", "auth": "Cookie", "description": "Dashboard data including online users"},

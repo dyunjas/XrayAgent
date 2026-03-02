@@ -126,3 +126,51 @@ def xray_stats(db: Session = Depends(get_db)):
             "users_total": int(users_total),
         },
     }
+
+
+@router.post("/reset_user_traffic")
+def reset_user_traffic(
+    user_id: int | None = Query(default=None, gt=0),
+    email: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    if not user_id and not email:
+        return {"ok": False, "detail": "Provide user_id or email"}
+
+    persistent_traffic_service.ensure_table(db)
+
+    active_key: Key | None = None
+    if user_id:
+        active_key = db.execute(
+            select(Key).where(
+                Key.user_id == user_id,
+                Key.status == KeyStatus.active,
+                Key.server_id == settings.sync_server_id,
+            )
+        ).scalars().first()
+
+    resolved_email = (email or (email_for_key(active_key) if active_key else "")).strip()
+    if not resolved_email and user_id:
+        resolved_email = email_for_user_id(user_id)
+    if not resolved_email:
+        return {"ok": False, "detail": "Could not resolve user email"}
+
+    resolved_user_id = int(active_key.user_id) if active_key else (int(user_id) if user_id else None)
+    users_reset = traffic_service.reset_users_traffic([resolved_email])
+
+    snapshots_reset = 0
+    if resolved_user_id is not None:
+        snapshots_reset = persistent_traffic_service.reset_users(
+            db,
+            server_id=settings.sync_server_id,
+            user_ids=[resolved_user_id],
+        )
+
+    return {
+        "ok": True,
+        "server_id": settings.sync_server_id,
+        "user_id": resolved_user_id,
+        "email": resolved_email,
+        "users": users_reset,
+        "snapshots_reset": int(snapshots_reset),
+    }
